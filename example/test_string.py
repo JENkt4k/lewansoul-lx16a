@@ -2,6 +2,31 @@ import usb.core
 import usb.util
 import sys
 
+
+dev = usb.core.find(idVendor=0x0483, idProduct=0x5750)
+if dev is None:
+  raise ValueError('Our device is not connected')
+else: 
+  print("found it")
+  for cfg in dev:
+    sys.stdout.write(str(cfg.bConfigurationValue) + '\n')
+    for intf in cfg:
+        sys.stdout.write('\t (intf.bInterfaceNumber , intf.bAlternateSetting) = ' + \
+                         str(intf.bInterfaceNumber) + \
+                         ',' + \
+                         str(intf.bAlternateSetting) + \
+                         '\n')
+        for ep in intf:
+            sys.stdout.write('\t\t ep.bEndpointAddress = ' + \
+                             str(ep.bEndpointAddress) + \
+                             '\n')
+  ep = dev[0].interfaces()[0].endpoints()[0]
+  i = dev[0].interfaces()[0].bInterfaceNumber
+  dev.reset()
+
+  if dev.is_kernel_driver_active(i):
+    dev.detach_kernel_driver(i)
+
 # commands
 CMD_SERVO_MOVE = 3
 CMD_ACTION_GROUP_RUN = 6
@@ -18,10 +43,11 @@ CMD_MULT_SERVO_POS_READ = 21
 #0x55 0x55 0x09 0x15 0x06 0x01 0x02 0x03 0x04 0x05 0x06
 header = [0x55, 0x55, 0x09, 0x15, 0x06, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06]
 battery = [0x55, 0x55, 0x02, 0x0F]
+# looks like 512 bytes
 
-def query(command, endpoint):
-  endpoint.write(bytes(command))
-  r=dev.read(endpoint.bEndpointAddress, 1024, 1000)
+def query(command, writeEp, readEpId):
+  writeEp.write(bytes(command))
+  r=dev.read(readEpId, 1024,17)
   print(len(r))
   print(r)
 
@@ -75,11 +101,12 @@ assert ep is not None
 #ep.write(bytes(CMD_GET_BATTERY_VOLTAGE))
 ep.write(bytes(battery))
 print(ep.bEndpointAddress)
-r=dev.read(130, 1024, 1000)
+r=dev.read(130, 64)
 print(len(r))
 print(r)
 
-#query(CMD_MULT_SERVO_POS_READ, ep)
+query(battery, ep, 130)
+query(battery, ep, 130)
 
 
 
