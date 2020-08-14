@@ -1,5 +1,6 @@
 .vscode/
-example/
+example/*
+example/!*.py
 lewansoul-lx16a/lewansoul_lx16a.egg-info/
 lewansoul-lx16a-terminal/build/
 lewansoul-lx16a-terminal/build/scripts-2.7/lewansoul_lx16a_terminal
